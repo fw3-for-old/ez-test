@@ -252,10 +252,10 @@ php tests/run_test.php
 
 #### 複数のディレクトリにあるテストを逐次実行させたい。
 
-`caseBaseDir`メソッドを用いて、テストケースがあるディレクトリパスを指定してください。
+`testCaseRootDir`メソッドを用いて、テストケースがあるディレクトリパスを指定してください。
 
 ```
 <?php
-TestRunner::factory()->caseBaseDir($path_to_test_cases_dir_1)->run();
-TestRunner::factory()->caseBaseDir($path_to_test_cases_dir_2)->run();
+TestRunner::factory()->testCaseRootDir($path_to_test_cases_dir_1)->run();
+TestRunner::factory()->testCaseRootDir($path_to_test_cases_dir_2)->run();
 ```
