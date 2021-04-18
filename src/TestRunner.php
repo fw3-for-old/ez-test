@@ -421,7 +421,7 @@ class TestRunner
                 }
 
                 if ($log_total === 0) {
-                    $logs[$test_case]   = [];
+                    $logs[$test_case]   = array();
                 }
             }
         }
