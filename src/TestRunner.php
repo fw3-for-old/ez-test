@@ -671,8 +671,13 @@ class TestRunner
 
             /** @var AbstractTest $testClass */
             $testClass  = new $test_class($this->contexts);
+            $testClass->splitConstract();
+
             $testClass->initialize();
+            $testClass->splitInitialize();
+
             $testClass->setupTest();
+            $testClass->splitSetup();
 
             /** @var AbstractTest $baseTestClass */
             $baseTestClass  = $testClass;
@@ -684,11 +689,15 @@ class TestRunner
 
             $need_teardown_test_class   = true;
 
+            $testClass->splitStartup();
+
             /** @var ReflectionTestMethod $reflectionTestMethod */
             foreach ($reflectionTestObject as $reflectionTestMethod) {
                 if ($is_proccess_fork && $this->targetTestMethod !== $reflectionTestMethod->name) {
                     continue;
                 }
+
+                $testClass->splitTestStart($reflectionTestMethod->name);
 
                 if (!$is_proccess_fork && $reflectionTestMethod->useProcessFork() || $base_use_proccess_fork) {
                     if ($php_binary === null) {
@@ -729,6 +738,7 @@ class TestRunner
                     $return_var = null;
 
                     \exec($command, $output, $return_var);
+                    $testClass->splitTest($reflectionTestMethod->name);
 
                     if ($return_var === 0 && isset($output[0]) && null !== ($logs = \json_decode($output[0], true))) {
                         $testClass->mergeLogs($logs['logs'][$test_class]);
@@ -739,6 +749,8 @@ class TestRunner
                     }
 
                     $need_teardown_test_class   = true;
+
+                    $testClass->splitTestEnd($reflectionTestMethod->name);
 
                     continue;
                 }
@@ -753,7 +765,9 @@ class TestRunner
 
                 try {
                     $testClass->{$reflectionTestMethod->name}();
+                    $testClass->splitTest($reflectionTestMethod->name);
                 } catch (\Exception $e) {
+                    $testClass->splitTest($reflectionTestMethod->name);
                     if ($testClass->hasPreparedException()) {
                         $testClass->assertPreparedException($e);
                     } else {
@@ -774,6 +788,8 @@ class TestRunner
                 } else {
                     $need_teardown_test_class   = true;
                 }
+
+                $testClass->splitTestEnd($reflectionTestMethod->name);
             }
 
             if ($need_teardown_test_class) {
@@ -781,6 +797,8 @@ class TestRunner
             }
 
             $testClass->finalize();
+
+            $testClass->splitFinish();
 
             $result[$test_class]    = $testClass->getLogs();
         }
@@ -807,6 +825,7 @@ class TestRunner
             $failed_count   = !empty($test_log['failed']) ? \count($test_log['failed']) : 0;
             $error_count    = !empty($test_log['error']) ? \count($test_log['error']) : 0;
             $skip_count     = !empty($test_log['skip']) ? \count($test_log['skip']) : 0;
+            $split          = $test_log['split'];
 
             $total          = $success_count + $failed_count + $error_count + $skip_count;
 
@@ -829,13 +848,14 @@ class TestRunner
                 }
 
                 $message[]  = \sprintf(
-                    '  test %s: %s / %s%s%s => %s',
+                    '  test %s: %s / %s%s%s => %s (%ssec)',
                     $is_error ? 'failed ' : 'success',
                     $success_count + $skip_count,
                     $total,
                     $skip_count !== 0 ? \sprintf(' (skiped: %d)', $skip_count) : '',
                     $is_error ? \sprintf(' (PHP Error: %d, failed: %d)', $error_count, $failed_count) : '',
-                    $class
+                    $class,
+                    substr((string) $split['finish'] - $split['constract'], 0, 7)
                 );
 
                 if (!empty($test_log['skip'])) {
