@@ -17,6 +17,8 @@
 
 namespace fw3_for_old\ez_test\test_unit;
 
+use fw3_for_old\ez_test\TestRunner;
+
 /**
  * 抽象テスト実施クラス
  */
@@ -29,6 +31,14 @@ abstract class AbstractTest implements TestInterface
         'success'   => array(),
         'failed'    => array(),
         'error'     => array(),
+        'split'     => array(
+            'constract'     => 0,
+            'initialize'    => 0,
+            'setup'         => 0,
+            'startup'       => 0,
+            'test'          => array(),
+            'finish'        => 0,
+        ),
     );
 
     const OPERATOR_EQUAL                    = '==';
@@ -678,11 +688,50 @@ abstract class AbstractTest implements TestInterface
     {
     }
 
-
     /**
      * 同一プロセス中で一度だけ実行される終了処理
      */
     public function finalize()
     {
+    }
+
+    public function splitConstract()
+    {
+        $this->logs['split']['constract']   = microtime(true);
+    }
+
+    public function splitInitialize()
+    {
+        $this->logs['split']['initialize']  = microtime(true);
+    }
+
+    public function splitSetup()
+    {
+        $this->logs['split']['setup']   = microtime(true);
+    }
+
+    public function splitStartup()
+    {
+        $this->logs['split']['startup'] = microtime(true);
+    }
+
+    public function splitTestStart($method_name)
+    {
+        $this->logs['split']['test'][$method_name]['start'] = microtime(true);
+    }
+
+    public function splitTest($method_name)
+    {
+        $this->logs['split']['test'][$method_name]['test']  = microtime(true);
+    }
+
+    public function splitTestEnd($method_name)
+    {
+        $this->logs['split']['test'][$method_name]['end']   = microtime(true);
+    }
+
+    public function splitFinish()
+    {
+        $this->logs['split']['finish']  = microtime(true);
     }
 }
