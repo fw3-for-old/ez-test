@@ -838,6 +838,7 @@ class TestRunner
         $success_total  = 0;
         $failed_total   = 0;
         $error_total    = 0;
+        $is_error       = false;
         $skip_total     = 0;
 
         $detail_message = array();
