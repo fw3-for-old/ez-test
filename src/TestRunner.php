@@ -130,6 +130,11 @@ class TestRunner
     protected $startMicrotime   = 0;
 
     /**
+     * @var array   実行時パラメータ
+     */
+    protected $parameters   = array();
+
+    /**
      * @var array   TestRunnerがもつコンテキスト情報
      * TestRunner生成時のコンテキスト情報をテストクラスに渡したい場合に使う
      */
@@ -244,6 +249,16 @@ class TestRunner
 
         $start_time = \explode('.', $this->startMicrotime);
         $start_time = \sprintf('%s.%s', \date('Y/m/d H:i:s', $start_time[0]), isset($start_time[1]) ? $start_time[1] : 0);
+
+        $shortopts = array(
+            'g:',
+        );
+
+        $longopts  = array(
+            'group:',
+        );
+
+        $this->parameters   = \getopt(implode('', $shortopts), $longopts);
 
         if ($this->stdOutMode === self::STD_OUT_MODE_TEXT) {
             echo '================================================', \PHP_EOL;
@@ -683,7 +698,11 @@ class TestRunner
             /** @var AbstractTest $baseTestClass */
             $baseTestClass  = $testClass;
 
-            $reflectionTestObject    = ReflectionTestObject::factory($testClass);
+            $reflectionTestObject    = ReflectionTestObject::factory($testClass, $this->parameters);
+
+            if (!$reflectionTestObject->hasTestMethods()) {
+                continue;
+            }
 
             $base_use_proccess_fork = !$is_proccess_fork && $reflectionTestObject->useProcessFork();
             $base_use_instance_fork = $reflectionTestObject->useInstanceFork();
@@ -819,6 +838,7 @@ class TestRunner
         $success_total  = 0;
         $failed_total   = 0;
         $error_total    = 0;
+        $is_error       = false;
         $skip_total     = 0;
 
         $detail_message = array();
