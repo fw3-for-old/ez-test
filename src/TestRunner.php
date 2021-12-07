@@ -247,7 +247,7 @@ class TestRunner
 
         if ($this->stdOutMode === self::STD_OUT_MODE_TEXT) {
             echo '================================================', \PHP_EOL;
-            echo ' fw3_for_old/ez_test.', \PHP_EOL;
+            echo ' fw3_for_old/ez_test on PHP Version ', \PHP_VERSION, \PHP_EOL;
             echo \sprintf(' target test cases => %s', $this->testCaseRootDir), \PHP_EOL;
             echo '================================================', \PHP_EOL;
             echo \sprintf(' start time  : %s', $start_time), \PHP_EOL;
@@ -291,6 +291,7 @@ class TestRunner
             ),
             'std_out'               => $std_out,
             'logs'                  => $logs,
+            'php_version'           => \PHP_VERSION,
         );
 
         if ($this->stdOutMode === self::STD_OUT_MODE_TEXT) {
@@ -343,7 +344,7 @@ class TestRunner
         $exec_time          = $time['exec_time'];
 
         echo '================================================', \PHP_EOL;
-        echo ' fw3_for_old/ez_test.', \PHP_EOL;
+        echo ' fw3_for_old/ez_test on PHP Version ', \PHP_VERSION, \PHP_EOL;
         echo \sprintf(' target test cases => %s', $test_case_root_dir), \PHP_EOL;
         echo '================================================', \PHP_EOL;
         echo \sprintf(' start time  : %s', $start_time), \PHP_EOL;
@@ -771,9 +772,11 @@ class TestRunner
                     if ($testClass->hasPreparedException()) {
                         $testClass->assertPreparedException($e);
                     } else {
+                        $testClass->cleanupPreparedException();
                         throw $e;
                     }
                 }
+                $testClass->cleanupPreparedException();
 
                 $testClass->teardownTest();
 
@@ -951,12 +954,15 @@ class TestRunner
 
                 return \sprintf('[%s]', \implode(', ', $ret));
             case 'object':
-                \ob_start();
-                \var_dump($var);
-                $object_status  = \ob_get_clean();
-
-                $object_status  = \substr($object_status, 0, \strpos($object_status, ' ('));
-                $object_status  = \sprintf('object(%s)', \substr($object_status, 6));
+                if (!function_exists("\\spl_object_id")) {
+                    \ob_start();
+                    \var_dump($var);
+                    $object_status = \ob_get_clean();
+                    $object_status = \substr($object_status, 0, \strpos($object_status, ' ('));
+                    $object_status = \sprintf('object(%s)', \substr($object_status, 6));
+                } else {
+                    $object_status = \sprintf('object(%s#%d)', \get_class($var), \spl_object_id($var));
+                }
 
                 if ($depth < 1) {
                     return $object_status;
